@@ -14,14 +14,16 @@
   var $ = function (s, c) { return (c || document).querySelector(s); };
   var $$ = function (s, c) { return Array.prototype.slice.call((c || document).querySelectorAll(s)); };
 
-  // When the site is opened straight from a folder (file://), make "folder/" links open folder/index.html
+  // When the site is opened straight from a folder (file://), folder links like
+  // "contact/" or "contact/?service=catering" must point at contact/index.html.
+  // On the live site (http/https) links are left as clean URLs.
   if (location.protocol === 'file:') {
     $$('a[href]').forEach(function (a) {
       var h = a.getAttribute('href');
-      if (!/^(https?:|mailto:|tel:|#|javascript:)/.test(h) && /\/(#.*)?$/.test(h)) {
-        a.setAttribute('href', h.replace(/\/(#.*)?$/, '/index.html$1'));
-      }
-      if (h === './' || h === '.') a.setAttribute('href', 'index.html');
+      if (/^(https?:|mailto:|tel:|#|javascript:|data:)/.test(h)) return;
+      var m = h.match(/^([^?#]*)([?#].*)?$/), path = m[1], rest = m[2] || '';
+      if (path === '' || path === '.' ) path = './';
+      if (/\/$/.test(path)) a.setAttribute('href', path + 'index.html' + rest);
     });
   }
 
@@ -57,6 +59,7 @@
     menu.classList.toggle('open', open);
     hdr.classList.toggle('open', open);
     document.body.style.overflow = open ? 'hidden' : '';
+    document.body.classList.toggle('menu-open', open);
   }
   if (burger) {
     burger.addEventListener('click', function () { setMenu(burger.getAttribute('aria-expanded') !== 'true'); });
