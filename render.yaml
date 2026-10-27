@@ -1,0 +1,21 @@
+# Render Blueprint — creates the enquiry server in one click.
+# Render → New → Blueprint → pick this repo. It will ask for DATABASE_URL and ADMIN_PASSWORD.
+services:
+  - type: web
+    name: chefsfinefood-api
+    runtime: node
+    plan: free
+    region: singapore
+    rootDir: server
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: NODE_VERSION
+        value: "22"

@@ -119,3 +119,5 @@ button.stat:hover{border-color:var(--new)}
   .tabs{overflow-x:auto;flex-wrap:nowrap;width:100%;padding-bottom:4px}
   .tabs button{white-space:nowrap}
 }
+
+.setup{margin-top:18px!important;padding:12px 14px;border:1px solid #d68910;color:#f5cba7!important;text-align:left;font-size:.84rem!important;background:rgba(214,137,16,.08)}

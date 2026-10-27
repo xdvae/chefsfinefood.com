@@ -186,5 +186,11 @@
   document.addEventListener('visibilitychange', function () { if (!document.hidden && !$('#app').hidden) load(true); });
 
   /* ---------- start ---------- */
+  fetch('/api/setup', { cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (j) {
+    var msgs = [];
+    if (j.database !== 'connected') msgs.push('Database: ' + j.database);
+    if (j.adminPassword !== 'set') msgs.push('ADMIN_PASSWORD is not set on Render (Environment tab).');
+    if (msgs.length) { var m = $('#setupMsg'); m.textContent = 'Setup needed — ' + msgs.join(' · '); m.hidden = false; }
+  }).catch(function () {});
   api('/api/admin/me').then(function (j) { if (j.ok) showApp(); else showLogin(); }).catch(function (e) { if (e.message !== 'auth') showLogin(); });
 })();

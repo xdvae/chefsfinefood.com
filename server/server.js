@@ -23,22 +23,27 @@ const PORT = process.env.PORT || 3000;
 const DATABASE_URL = process.env.DATABASE_URL;
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || '';
 const SESSION_SECRET = process.env.SESSION_SECRET || crypto.createHash('sha256').update('cff:' + ADMIN_PASSWORD + ':' + (DATABASE_URL || '')).digest('hex');
-const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || 'https://chefsfinefood.com,https://www.chefsfinefood.com')
+// Always allowed: chefsfinefood.com (with/without www) and any Render preview of the site
+// (https://chefsfinefood....onrender.com). Add more with ALLOWED_ORIGINS (comma separated).
+const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || '')
   .split(',').map(s => s.trim().replace(/\/$/, '')).filter(Boolean);
+const ORIGIN_RE = /^https:\/\/((www\.)?chefsfinefood\.com|chefsfinefood[a-z0-9-]*\.onrender\.com)$/i;
+const originAllowed = o => !!o && (ORIGIN_RE.test(o) || ALLOWED_ORIGINS.includes(o) || ALLOWED_ORIGINS.includes('*'));
 const SESSION_DAYS = 30;
 
-if (!DATABASE_URL) { console.error('Missing DATABASE_URL environment variable.'); process.exit(1); }
-if (!ADMIN_PASSWORD) console.warn('WARNING: ADMIN_PASSWORD is not set — the dashboard login is disabled until you set it.');
+if (!DATABASE_URL) console.error('SETUP NEEDED: DATABASE_URL is not set. Add it under Render → Environment. The server stays up and shows this message at /api/health.');
+if (!ADMIN_PASSWORD) console.warn('SETUP NEEDED: ADMIN_PASSWORD is not set — the dashboard login is disabled until you set it.');
 
 /* ---------------- Database ---------------- */
-const isLocalDb = /@(localhost|127\.0\.0\.1)[:/]/.test(DATABASE_URL);
-const pool = new Pool({
+const isLocalDb = /@(localhost|127\.0\.0\.1)[:/]/.test(DATABASE_URL || '');
+const pool = DATABASE_URL ? new Pool({
   connectionString: DATABASE_URL,
   ssl: (process.env.PGSSL === 'disable' || isLocalDb) ? false : { rejectUnauthorized: false },
   max: 5,
   idleTimeoutMillis: 30000,
-});
-pool.on('error', e => console.error('DB pool error:', e.message));
+}) : null;
+if (pool) pool.on('error', e => console.error('DB pool error:', e.message));
+let dbReady = false, dbError = DATABASE_URL ? 'Connecting to database…' : 'DATABASE_URL is not set on the server (Render → Environment).';
 
 const STATUSES = ['new', 'contacted', 'booked', 'closed'];
 
@@ -119,7 +124,7 @@ setInterval(() => { const now = Date.now(); for (const [k, b] of buckets) if (no
 
 function cors(req, res) {
   const origin = (req.headers.origin || '').replace(/\/$/, '');
-  if (origin && (ALLOWED_ORIGINS.includes(origin) || ALLOWED_ORIGINS.includes('*'))) {
+  if (originAllowed(origin)) {
     res.setHeader('Access-Control-Allow-Origin', origin);
     res.setHeader('Vary', 'Origin');
     res.setHeader('Access-Control-Allow-Methods', 'POST, GET, OPTIONS');
@@ -290,12 +295,17 @@ const server = http.createServer(async (req, res) => {
   const p = url.pathname.replace(/\/+$/, '') || '/';
   try {
     // public
-    if (p === '/api/health') { cors(req, res); return send(res, 200, { ok: true }); }
+    if (p === '/api/health') {
+      cors(req, res);
+      return send(res, 200, { ok: dbReady, server: 'running', database: dbReady ? 'connected' : dbError, adminPassword: ADMIN_PASSWORD ? 'set' : 'NOT SET' });
+    }
+    if (p === '/api/setup') return send(res, 200, { database: dbReady ? 'connected' : dbError, adminPassword: ADMIN_PASSWORD ? 'set' : 'NOT SET' });
     if (p === '/api/enquiries') {
       const allowed = cors(req, res);
       if (req.method === 'OPTIONS') return send(res, allowed ? 204 : 403, '');
       if (req.method !== 'POST') return send(res, 405, { ok: false });
-      if (req.headers.origin && !allowed) return send(res, 403, { ok: false, error: 'Origin not allowed' });
+      if (req.headers.origin && !allowed) { console.warn('Blocked enquiry from origin', req.headers.origin, '— add it to ALLOWED_ORIGINS'); return send(res, 403, { ok: false, error: 'Origin not allowed' }); }
+      if (!dbReady) return send(res, 503, { ok: false, error: 'Not ready' });
       return await createEnquiry(req, res);
     }
     if (p === '/' ) { res.writeHead(302, { Location: '/admin/' }); return res.end(); }
@@ -307,7 +317,7 @@ const server = http.createServer(async (req, res) => {
       if (!sameOrigin(req)) return send(res, 403, { ok: false });
       if (limited('login:' + clientIp(req), 10, 15 * 60 * 1000)) return send(res, 429, { ok: false, error: 'Too many attempts. Try again in 15 minutes.' });
       let b; try { b = await readBody(req, 4096); } catch (e) { return send(res, 400, { ok: false }); }
-      if (!ADMIN_PASSWORD) return send(res, 503, { ok: false, error: 'ADMIN_PASSWORD is not set on the server.' });
+      if (!ADMIN_PASSWORD) return send(res, 503, { ok: false, error: 'ADMIN_PASSWORD is not set on Render (Environment tab).' });
       if (!passwordOk(b.password)) return send(res, 401, { ok: false, error: 'Wrong password' });
       setSession(req, res, makeToken(), SESSION_DAYS * 86400);
       return send(res, 200, { ok: true });
@@ -315,6 +325,7 @@ const server = http.createServer(async (req, res) => {
     if (p === '/api/admin/logout' && req.method === 'POST') { setSession(req, res, '', 0); return send(res, 200, { ok: true }); }
     if (p.startsWith('/api/admin/')) {
       if (!authed(req)) return send(res, 401, { ok: false, error: 'Please log in' });
+      if (!dbReady) return send(res, 503, { ok: false, error: 'Database not connected: ' + dbError });
       if (req.method !== 'GET' && !sameOrigin(req)) return send(res, 403, { ok: false });
       res.setHeader('Cache-Control', 'no-store');
       if (p === '/api/admin/me') return send(res, 200, { ok: true });
@@ -331,6 +342,10 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
-migrate()
-  .then(() => server.listen(PORT, () => console.log(`Enquiry server running on port ${PORT} — dashboard at /admin/`)))
-  .catch(err => { console.error('Database setup failed:', err.message); process.exit(1); });
+server.listen(PORT, () => console.log(`Enquiry server running on port ${PORT} — dashboard at /admin/`));
+async function connectDb() {
+  if (!pool) return;
+  try { await migrate(); dbReady = true; dbError = ''; console.log('Database connected and ready.'); }
+  catch (err) { dbReady = false; dbError = 'Database error: ' + err.message; console.error(dbError, '— retrying in 30s'); setTimeout(connectDb, 30000); }
+}
+connectDb();
