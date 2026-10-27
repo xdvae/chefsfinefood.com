@@ -426,25 +426,42 @@
       <span class="eyebrow">Reels</span>
       <h2>Taste It <em>in Motion</em></h2>
       <p class="lead">A glimpse behind the counters — live grills, fresh plates and the royal buffet service our guests remember long after the last dessert.</p>
-      <p class="reels-hint">Tap the speaker to play with sound</p>
+      <p class="reels-hint">Tap a reel to watch full screen with sound</p>
       <a href="gallery/" class="btn btn-gold">View Full Gallery <svg class="lng" aria-hidden="true" viewBox="0 0 40 12"><use href="#lng"/></svg></a>
     </div>
     <div class="reel-row"><figure class="reel rv d1">
   <div class="reel-frame">
-    <video data-reel muted loop playsinline preload="none" poster="assets/images/reel-1.jpg" aria-label="Live food counters, grills and fresh catering at an event in Jammu" width="480" height="864"><source src="assets/video/reel-1.mp4" type="video/mp4"></video>
-    <button type="button" class="reel-sound" aria-label="Turn sound on" aria-pressed="false"><svg class="off" aria-hidden="true"><use href="#snd-off"/></svg><svg class="on" aria-hidden="true"><use href="#snd-on"/></svg></button>
-    <span class="reel-play" aria-hidden="true"><svg><use href="#play"/></svg></span>
+    <video data-reel data-src="assets/video/reel-1.mp4" data-cap="Live counters &amp; fresh catering" muted loop playsinline preload="none" poster="assets/images/reel-1.jpg" width="480" height="864" aria-hidden="true"><source src="assets/video/reel-1.mp4" type="video/mp4"></video>
+    <button type="button" class="reel-open" data-index="0" aria-label="Play reel: Live counters &amp; fresh catering (opens full screen with sound)">
+      <span class="reel-badge" aria-hidden="true"><svg><use href="#play"/></svg><em>Tap to watch</em></span>
+    </button>
   </div>
   <figcaption><span>01</span>Live counters & fresh catering</figcaption>
 </figure><figure class="reel rv d2">
   <div class="reel-frame">
-    <video data-reel muted loop playsinline preload="none" poster="assets/images/reel-2.jpg" aria-label="Royal buffet spread with copper and brass serveware at a wedding in Jammu" width="480" height="864"><source src="assets/video/reel-2.mp4" type="video/mp4"></video>
-    <button type="button" class="reel-sound" aria-label="Turn sound on" aria-pressed="false"><svg class="off" aria-hidden="true"><use href="#snd-off"/></svg><svg class="on" aria-hidden="true"><use href="#snd-on"/></svg></button>
-    <span class="reel-play" aria-hidden="true"><svg><use href="#play"/></svg></span>
+    <video data-reel data-src="assets/video/reel-2.mp4" data-cap="Royal buffet service" muted loop playsinline preload="none" poster="assets/images/reel-2.jpg" width="480" height="864" aria-hidden="true"><source src="assets/video/reel-2.mp4" type="video/mp4"></video>
+    <button type="button" class="reel-open" data-index="1" aria-label="Play reel: Royal buffet service (opens full screen with sound)">
+      <span class="reel-badge" aria-hidden="true"><svg><use href="#play"/></svg><em>Tap to watch</em></span>
+    </button>
   </div>
   <figcaption><span>02</span>Royal buffet service</figcaption>
 </figure></div>
   </div>
+  <div class="reel-viewer" role="dialog" aria-modal="true" aria-label="Reel player" hidden>
+  <div class="rv-stage">
+    <video playsinline preload="auto"></video>
+    <button type="button" class="rv-tap" aria-label="Pause or play"></button>
+    <span class="rv-paused" aria-hidden="true"><svg><use href="#play"/></svg></span>
+  </div>
+  <div class="rv-top">
+    <span class="rv-count"><b>1</b> / 2</span>
+    <button type="button" class="rv-btn rv-mute" aria-label="Turn sound off" aria-pressed="true"><svg class="on" aria-hidden="true"><use href="#snd-on"/></svg><svg class="off" aria-hidden="true"><use href="#snd-off"/></svg></button>
+    <button type="button" class="rv-btn rv-close" aria-label="Close reel"><svg aria-hidden="true"><use href="#x"/></svg></button>
+  </div>
+  <button type="button" class="rv-btn rv-prev" aria-label="Previous reel"><svg aria-hidden="true"><use href="#larr"/></svg></button>
+  <button type="button" class="rv-btn rv-next" aria-label="Next reel"><svg aria-hidden="true"><use href="#arr"/></svg></button>
+  <div class="rv-bottom"><p class="rv-cap"></p><span class="rv-bar"><i></i></span></div>
+</div>
 </section>
 
 <section class="bg-paper">
