@@ -21,10 +21,13 @@ REPLACE BEFORE LAUNCH
  - Testimonials: the 4 reviews are SAMPLES. Replace with real client reviews
    (search the HTML for "SAMPLE TESTIMONIALS"), or remove them.
  - Stats (10+ years, 300+ events, 50+ team, 25,000+ guests): confirm they are accurate.
- - Full street address: currently only "Jammu, Jammu & Kashmir". Adding the exact address
-   to the footer, contact page and schema helps local SEO.
+ - Address is set everywhere: Sector 3, Channi Himmat, near Surya Chowk, Jammu 180015.
+   Map pin coordinates are approximate - for exact ones, open Google Maps, right-click
+   the office and send me the two numbers.
+ - Use EXACTLY the same name, address and phone on your Google Business Profile, Justdial
+   and Instagram bio as on the site (Google matches them for local ranking).
  - Opening hours: currently Mon-Sun 9 AM - 9 PM.
- - Social links: footer Instagram / Facebook / YouTube links point to "#".
+ - Social links: footer Instagram goes to @shreeshyamcaterer; Facebook / YouTube still "#".
  - About page team cards: generic roles - swap in real names and photos.
 
 PHOTOS & VIDEOS
@@ -51,3 +54,15 @@ WHAT'S INCLUDED FOR SEO
  - sitemap.xml, robots.txt, 404 page, web manifest, favicons
  - .htaccess: HTTPS + non-www redirects, compression, caching
  - Lazy-loaded responsive images, mobile-friendly layout, accessible markup
+
+SHREE SHYAM CATERERS (pure veg & vegan unit)
+--------------------------------------------
+ - Page: /shree-shyam-caterers/  (also linked from About, Home, menu, footer)
+ - Phone shown for Shree Shyam: +91 90556 05000 (taken from the reel end cards)
+ - Create a separate Google Business Profile for Shree Shyam Caterers too - it can
+   rank for "pure veg caterers in Jammu" searches on its own.
+
+REELS
+-----
+ - assets/video/reel-1.mp4 ... reel-6.mp4 with posters in assets/images/reel-N.jpg
+ - reel-6 was trimmed to remove an end card showing a Panipat address/number.
