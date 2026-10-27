@@ -35,7 +35,9 @@ if (!DATABASE_URL) console.error('SETUP NEEDED: DATABASE_URL is not set. Add it 
 if (!ADMIN_PASSWORD) console.warn('SETUP NEEDED: ADMIN_PASSWORD is not set — the dashboard login is disabled until you set it.');
 
 /* ---------------- Database ---------------- */
-const isLocalDb = /@(localhost|127\.0\.0\.1)[:/]/.test(DATABASE_URL || '');
+// No SSL for local databases and Render's internal address (host without dots, e.g. dpg-xxxx-a)
+let dbHost = ''; try { dbHost = new URL(DATABASE_URL || 'postgres://x').hostname; } catch (e) {}
+const isLocalDb = /^(localhost|127\.0\.0\.1)$/.test(dbHost) || (dbHost && !dbHost.includes('.'));
 const pool = DATABASE_URL ? new Pool({
   connectionString: DATABASE_URL,
   ssl: (process.env.PGSSL === 'disable' || isLocalDb) ? false : { rejectUnauthorized: false },
