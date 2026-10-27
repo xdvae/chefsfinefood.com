@@ -38,12 +38,12 @@ To use your own: put photos in assets/images/ and change the img src in the HTML
 e.g. alt="Floral mandap décor at a wedding in Jammu" - this helps Google Images.
 Videos: see assets/video/PUT-VIDEOS-HERE.txt
 
-ENQUIRY FORM
-------------
-No backend needed: the form opens WhatsApp (90551 35000) with the enquiry pre-filled,
-or the visitor's email app with "Send by Email".
-To ALSO receive enquiries automatically by email, create a free form at formspree.io
-and paste its URL into FORM_ENDPOINT at the top of assets/js/main.js.
+ENQUIRY FORM + DASHBOARD
+------------------------
+Enquiries are saved to a database and shown in a dashboard:
+  https://chefsfinefood-api.onrender.com/admin/
+Setup steps (Neon database + Render web service): see server/README.md
+Until the backend is set up, the form asks visitors to send their enquiry on WhatsApp.
 
 WHAT'S INCLUDED FOR SEO
 -----------------------

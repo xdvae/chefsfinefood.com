@@ -5,10 +5,9 @@
   /* ===== SETTINGS — edit these ===== */
   var WHATSAPP = '919055135000';            // number with country code, no +
   var EMAIL = 'finefoodthechef@gmail.com';
-  // Optional: paste a Formspree / FormSubmit / Web3Forms endpoint here to also
-  // receive enquiries by email, e.g. 'https://formspree.io/f/xxxxxxx'.
-  // Leave empty to send enquiries through WhatsApp only.
-  var FORM_ENDPOINT = '';
+  // Enquiry backend (the Render web service in /server). Enquiries are saved here
+  // and appear in the dashboard at  ENQUIRY_API + '/admin/'.
+  var ENQUIRY_API = 'https://chefsfinefood-api.onrender.com';
   /* ================================= */
 
   var $ = function (s, c) { return (c || document).querySelector(s); };
@@ -273,14 +272,21 @@
     }
   }
 
-  // Enquiry form
-  $$('form.enq-form').forEach(function (form) {
+  // Enquiry form → saved to the backend; WhatsApp is optional (and the fallback)
+  var forms = $$('form.enq-form');
+  if (forms.length && ENQUIRY_API) {
+    // wake the server early (free hosting sleeps when idle) so submitting is quick
+    try { fetch(ENQUIRY_API + '/api/health', { mode: 'no-cors', cache: 'no-store' }).catch(function () {}); } catch (e) {}
+  }
+  forms.forEach(function (form) {
     var params = new URLSearchParams(location.search);
     var ev = params.get('event'), sv = params.get('service');
     if (ev && form.event) { $$('option', form.event).forEach(function (o) { if (o.value.toLowerCase().indexOf(ev.toLowerCase()) === 0) form.event.value = o.value; }); }
     if (sv) $$('input[name="services"]', form).forEach(function (c) { if (c.value.toLowerCase().indexOf(sv.toLowerCase()) === 0) c.checked = true; });
     if (form.date) form.date.min = new Date().toISOString().slice(0, 10);
+    var brand = /shree-shyam/.test(location.pathname) ? 'Shree Shyam' : "The Chef's";
 
+    var g = function (n) { return form[n] ? form[n].value.trim() : ''; };
     var check = function () {
       var ok = true;
       [['name', function (v) { return v.trim().length > 1; }],
@@ -293,38 +299,58 @@
       });
       return ok;
     };
-    var message = function () {
-      var g = function (n) { return form[n] ? form[n].value.trim() : ''; };
-      var svcs = $$('input[name="services"]:checked', form).map(function (c) { return c.value; }).join(', ');
-      return ['Hello The Chef Fine Food Caterers, I would like to enquire about an event.', '',
-        'Name: ' + g('name'), 'Phone: ' + g('phone'),
-        g('email') && 'Email: ' + g('email'),
-        'Event: ' + g('event'),
-        g('date') && 'Date: ' + g('date'),
-        g('guests') && 'Guests: ' + g('guests'),
-        g('venue') && 'Venue/Area: ' + g('venue'),
-        svcs && 'Services: ' + svcs,
-        g('message') && ('Details: ' + g('message'))].filter(Boolean).join('\n');
+    var services = function () { return $$('input[name="services"]:checked', form).map(function (c) { return c.value; }); };
+    var payload = function (channel) {
+      return { name: g('name'), phone: g('phone'), email: g('email'), event: g('event'), date: g('date'), guests: g('guests'),
+        venue: g('venue'), services: services(), message: g('message'), website: g('website'), page: location.pathname, brand: brand, channel: channel };
     };
-    var done = function () { form.classList.add('sent'); form.scrollIntoView({ behavior: 'smooth', block: 'center' }); };
+    var waText = function () {
+      var sv = services().join(', ');
+      return ['Hello ' + (brand === 'Shree Shyam' ? 'Shree Shyam Caterers' : "The Chef's Fine Food Caterers") + ', I would like to enquire about an event.', '',
+        'Name: ' + g('name'), 'Phone: ' + g('phone'), g('email') && 'Email: ' + g('email'), 'Event: ' + g('event'),
+        g('date') && 'Date: ' + g('date'), g('guests') && 'Guests: ' + g('guests'), g('venue') && 'Venue/Area: ' + g('venue'),
+        sv && 'Services: ' + sv, g('message') && 'Details: ' + g('message')].filter(Boolean).join('\n');
+    };
+    var waUrl = function () { return 'https://wa.me/' + WHATSAPP + '?text=' + encodeURIComponent(waText()); };
+    var save = function (channel) {
+      if (!ENQUIRY_API) return Promise.reject(new Error('no api'));
+      var ctrl = 'AbortController' in window ? new AbortController() : null;
+      var timer = setTimeout(function () { if (ctrl) ctrl.abort(); }, 45000);
+      return fetch(ENQUIRY_API + '/api/enquiries', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload(channel)),
+        keepalive: channel === 'whatsapp', signal: ctrl ? ctrl.signal : undefined
+      }).then(function (r) { clearTimeout(timer); return r.json().then(function (j) { if (!r.ok || !j.ok) throw new Error(j.error || 'failed'); return j; }); });
+    };
+    var ok = $('.form-ok', form), submitBtn = $('button[type="submit"]', form);
+    var showResult = function (kind) {
+      var first = g('name').split(' ')[0];
+      $('[data-ok-title]', ok).textContent = kind === 'fail' ? 'Almost there' : 'Thank you' + (first ? ', ' + first : '') + '!';
+      $('[data-ok-text]', ok).textContent = kind === 'fail'
+        ? 'We could not send your enquiry online just now. Please tap below to send it on WhatsApp — it only takes a second.'
+        : kind === 'whatsapp' ? 'Your enquiry is saved and WhatsApp has opened with your details. Our team will get back to you within 24 hours.'
+        : 'Your enquiry has been received. Our team will call you within 24 hours.';
+      var wa = $('[data-ok-wa]', ok); wa.href = waUrl();
+      $('span', wa).textContent = kind === 'fail' ? 'Send on WhatsApp' : 'Chat on WhatsApp now';
+      wa.hidden = kind === 'whatsapp';
+      form.classList.add('sent');
+      ok.setAttribute('tabindex', '-1'); ok.focus({ preventScroll: true });
+      form.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    };
 
     form.addEventListener('submit', function (e) {
       e.preventDefault();
-      if (form.website && form.website.value) return; // spam trap
+      if (form.website && form.website.value) return;
       if (!check()) return;
-      var text = message();
-      if (FORM_ENDPOINT) {
-        var fd = new FormData(form); fd.append('summary', text);
-        fetch(FORM_ENDPOINT, { method: 'POST', body: fd, headers: { Accept: 'application/json' } }).catch(function () {});
-      }
-      window.open('https://wa.me/' + WHATSAPP + '?text=' + encodeURIComponent(text), '_blank', 'noopener');
-      done();
+      submitBtn.disabled = true; var lbl = $('[data-label]', submitBtn), was = lbl.textContent; lbl.textContent = 'Sending…';
+      save('form').then(function () { showResult('ok'); }, function () { showResult('fail'); })
+        .then(function () { submitBtn.disabled = false; lbl.textContent = was; });
     });
-    var mail = $('[data-mail]', form);
-    if (mail) mail.addEventListener('click', function () {
+    var waBtn = $('[data-wa]', form);
+    if (waBtn) waBtn.addEventListener('click', function () {
       if (!check()) return;
-      location.href = 'mailto:' + EMAIL + '?subject=' + encodeURIComponent('Event enquiry – ' + (form.event ? form.event.value : '')) + '&body=' + encodeURIComponent(message());
-      done();
+      window.open(waUrl(), '_blank', 'noopener');
+      save('whatsapp').catch(function () {});
+      showResult('whatsapp');
     });
     var again = $('[data-again]', form);
     if (again) again.addEventListener('click', function () { form.reset(); form.classList.remove('sent'); });

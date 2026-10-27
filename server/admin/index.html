@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en-IN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#1d1d18">
+<title>Enquiries · The Chef's</title>
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Jost:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="admin.css">
+</head>
+<body>
+
+<!-- LOGIN -->
+<main id="login" class="login" hidden>
+  <form id="loginForm" class="login-box" autocomplete="on">
+    <img src="logo.png" width="84" height="84" alt="">
+    <h1>Enquiries</h1>
+    <p>The Chef's Fine Food Caterers · Shree Shyam Caterers</p>
+    <label for="pw">Password</label>
+    <input id="pw" name="password" type="password" autocomplete="current-password" required autofocus>
+    <button type="submit" class="primary">Log in</button>
+    <p class="err" id="loginErr" role="alert"></p>
+  </form>
+</main>
+
+<!-- APP -->
+<div id="app" hidden>
+  <header class="top">
+    <div class="brand"><img src="logo.png" width="40" height="40" alt=""><div><b>Enquiries</b><small>The Chef's · Shree Shyam</small></div></div>
+    <div class="top-actions">
+      <button type="button" id="refreshBtn" class="ghost" title="Check for new enquiries"><span class="ico">↻</span><span class="lbl">Refresh</span></button>
+      <a id="csvBtn" class="ghost" href="/api/admin/export.csv" title="Download all enquiries for Excel"><span class="ico">⤓</span><span class="lbl">Excel</span></a>
+      <button type="button" id="logoutBtn" class="ghost" title="Log out"><span class="ico">⎋</span><span class="lbl">Log out</span></button>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="stats" aria-label="Summary">
+      <button type="button" class="stat s-new" data-go="new"><b id="stNew">0</b><span>New – not contacted yet</span></button>
+      <div class="stat"><b id="stToday">0</b><span>Received today</span></div>
+      <div class="stat"><b id="stWeek">0</b><span>Last 7 days</span></div>
+      <div class="stat"><b id="stUpcoming">0</b><span>Events in next 30 days</span></div>
+    </section>
+
+    <section class="controls">
+      <nav class="tabs" aria-label="Filter by status">
+        <button type="button" data-status="" aria-pressed="true">All <i id="cAll">0</i></button>
+        <button type="button" data-status="new" aria-pressed="false"><span class="dot new"></span>New <i id="cNew">0</i></button>
+        <button type="button" data-status="contacted" aria-pressed="false"><span class="dot contacted"></span>Contacted <i id="cContacted">0</i></button>
+        <button type="button" data-status="booked" aria-pressed="false"><span class="dot booked"></span>Booked <i id="cBooked">0</i></button>
+        <button type="button" data-status="closed" aria-pressed="false"><span class="dot closed"></span>Closed <i id="cClosed">0</i></button>
+      </nav>
+      <input id="search" type="search" placeholder="Search name, phone, venue, notes…" aria-label="Search enquiries">
+    </section>
+
+    <p class="help">Tap <b>Call</b> or <b>WhatsApp</b> to reply. Then mark the enquiry <b>Contacted</b>, <b>Booked</b> or <b>Closed</b> so you always know where each lead stands.</p>
+
+    <section id="list" class="list" aria-live="polite"></section>
+    <p id="empty" class="empty" hidden></p>
+  </main>
+</div>
+
+<div id="toast" class="toast" role="status" hidden></div>
+
+<template id="cardTpl">
+  <article class="card">
+    <div class="c-head">
+      <div>
+        <h2 class="c-name"></h2>
+        <p class="c-when"></p>
+      </div>
+      <span class="c-flag" hidden>New</span>
+    </div>
+    <div class="c-actions">
+      <a class="act call"><span class="ico">✆</span>Call</a>
+      <a class="act wa" target="_blank" rel="noopener"><span class="ico">◉</span>WhatsApp</a>
+      <a class="act mail" hidden><span class="ico">✉</span>Email</a>
+    </div>
+    <dl class="c-details"></dl>
+    <div class="c-status" role="group" aria-label="Status">
+      <span class="c-label">Status</span>
+      <button type="button" data-s="new"><span class="dot new"></span>New</button>
+      <button type="button" data-s="contacted"><span class="dot contacted"></span>Contacted</button>
+      <button type="button" data-s="booked"><span class="dot booked"></span>Booked</button>
+      <button type="button" data-s="closed"><span class="dot closed"></span>Closed</button>
+    </div>
+    <div class="c-notes">
+      <label class="c-label">Your notes <em class="saved" hidden>Saved ✓</em></label>
+      <textarea rows="2" placeholder="e.g. Called on Monday, wants Wazwan menu, quote sent ₹…"></textarea>
+    </div>
+    <div class="c-foot"><span class="c-src"></span><button type="button" class="del">Delete</button></div>
+  </article>
+</template>
+
+<script src="admin.js" defer></script>
+</body>
+</html>
