@@ -189,6 +189,42 @@
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && vm.classList.contains('open')) closeV(); });
   }
 
+  // Reels: play muted while on screen, pause when scrolled away, sound toggle
+  var reels = $$('video[data-reel]');
+  if (reels.length) {
+    var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var fig = function (v) { return v.closest('.reel'); };
+    var playV = function (v) { var p = v.play(); if (p && p.catch) p.catch(function () { fig(v).classList.add('paused'); }); fig(v).classList.remove('paused'); };
+    var pauseV = function (v) { v.pause(); fig(v).classList.add('paused'); };
+    reels.forEach(function (v) {
+      v.dataset.user = '';
+      fig(v).classList.add('paused');
+      v.addEventListener('click', function () {
+        if (v.paused) { v.dataset.user = ''; v.preload = 'auto'; playV(v); } else { v.dataset.user = 'paused'; pauseV(v); }
+      });
+      var btn = fig(v).querySelector('.reel-sound');
+      btn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var turnOn = v.muted;
+        reels.forEach(function (o) { o.muted = true; var b = fig(o).querySelector('.reel-sound'); b.setAttribute('aria-pressed', 'false'); b.setAttribute('aria-label', 'Turn sound on'); });
+        if (turnOn) {
+          v.muted = false; btn.setAttribute('aria-pressed', 'true'); btn.setAttribute('aria-label', 'Turn sound off');
+          v.dataset.user = ''; v.preload = 'auto'; playV(v);
+        }
+      });
+    });
+    if ('IntersectionObserver' in window && !reduce) {
+      var ro = new IntersectionObserver(function (es) {
+        es.forEach(function (e) {
+          var v = e.target;
+          if (e.isIntersecting && e.intersectionRatio >= 0.5) { if (v.dataset.user !== 'paused') { v.preload = 'auto'; playV(v); } }
+          else if (!v.paused) { pauseV(v); if (!v.muted) fig(v).querySelector('.reel-sound').click(); }
+        });
+      }, { threshold: [0, 0.5] });
+      reels.forEach(function (v) { ro.observe(v); });
+    }
+  }
+
   // Enquiry form
   $$('form.enq-form').forEach(function (form) {
     var params = new URLSearchParams(location.search);

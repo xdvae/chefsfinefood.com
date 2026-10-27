@@ -1,9 +1,6 @@
-Drop your MP4 videos in this folder with these exact names:
+Videos in use:
+reel-1.mp4, reel-2.mp4 - vertical reels on the Home and Gallery pages (posters: assets/images/reel-1.jpg, reel-2.jpg)
 
-hero.mp4               - plays silently behind the home page headline (10-20 sec loop, under 8 MB)
-our-story.mp4          - opens from "Watch Our Story" on the home page
-wedding-highlights.mp4 - Gallery page film 1
-decor-setup.mp4        - Gallery page film 2
-live-counters.mp4      - Gallery page film 3
-
-Until a file is added, the site simply shows the photo / a "coming soon" message.
+Optional, add with these exact names:
+hero.mp4      - plays silently behind the home page headline (10-20 sec loop, under 8 MB)
+our-story.mp4 - opens from "Watch Our Story" on the home page
