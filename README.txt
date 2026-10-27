@@ -38,12 +38,10 @@ To use your own: put photos in assets/images/ and change the img src in the HTML
 e.g. alt="Floral mandap décor at a wedding in Jammu" - this helps Google Images.
 Videos: see assets/video/PUT-VIDEOS-HERE.txt
 
-ENQUIRY FORM + DASHBOARD
-------------------------
-Enquiries are saved to a database and shown in a dashboard:
-  https://chefsfinefood.com/admin/
-Setup steps (Neon database + Render web service): see server/README.md
-Until the backend is set up, the form asks visitors to send their enquiry on WhatsApp.
+ENQUIRY FORM
+------------
+Forms open WhatsApp (90551 35000) with the customer's enquiry filled in - no backend needed.
+A database + dashboard version is parked in /server for later (not active).
 
 WHAT'S INCLUDED FOR SEO
 -----------------------

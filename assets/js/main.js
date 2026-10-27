@@ -5,10 +5,12 @@
   /* ===== SETTINGS — edit these ===== */
   var WHATSAPP = '919055135000';            // number with country code, no +
   var EMAIL = 'finefoodthechef@gmail.com';
-  // Enquiries are saved by the server on this same domain (chefsfinefood.com/api/enquiries)
-  // and appear in the dashboard at chefsfinefood.com/admin/. Leave empty for same domain.
-  var ENQUIRY_API = '';
-  var CAN_SAVE = /^https?:$/.test(location.protocol);
+  // Enquiries are saved in the Supabase database and shown at chefsfinefood.com/admin/
+  // (public anon key — safe to publish; the database only allows the locked submit function)
+  var SUPABASE_URL = '__SUPABASE_URL__';
+  var SUPABASE_KEY = '__SUPABASE_ANON_KEY__';
+  var CAN_SAVE = SUPABASE_URL.indexOf('__') !== 0;
+  var sbHeaders = { 'Content-Type': 'application/json', apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY };
   /* ================================= */
 
   var $ = function (s, c) { return (c || document).querySelector(s); };
@@ -277,7 +279,8 @@
   var forms = $$('form.enq-form');
   if (forms.length && CAN_SAVE) {
     // wake the server early (free hosting sleeps when idle) so submitting is quick
-    try { fetch(ENQUIRY_API + '/api/health', { mode: 'no-cors', cache: 'no-store' }).catch(function () {}); } catch (e) {}
+    // light keep-alive so the free database never pauses while people visit the site
+    try { fetch(SUPABASE_URL + '/rest/v1/rpc/ping', { method: 'POST', headers: sbHeaders, body: '{}' }).catch(function () {}); } catch (e) {}
   }
   forms.forEach(function (form) {
     var params = new URLSearchParams(location.search);
@@ -317,8 +320,8 @@
       if (!CAN_SAVE) return Promise.reject(new Error('no api'));
       var ctrl = 'AbortController' in window ? new AbortController() : null;
       var timer = setTimeout(function () { if (ctrl) ctrl.abort(); }, 45000);
-      return fetch(ENQUIRY_API + '/api/enquiries', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload(channel)),
+      return fetch(SUPABASE_URL + '/rest/v1/rpc/submit_enquiry', {
+        method: 'POST', headers: sbHeaders, body: JSON.stringify({ p: payload(channel) }),
         keepalive: channel === 'whatsapp', signal: ctrl ? ctrl.signal : undefined
       }).then(function (r) { clearTimeout(timer); return r.json().then(function (j) { if (!r.ok || !j.ok) throw new Error(j.error || 'failed'); return j; }); });
     };
@@ -328,11 +331,12 @@
       $('[data-ok-title]', ok).textContent = kind === 'fail' ? 'Almost there' : 'Thank you' + (first ? ', ' + first : '') + '!';
       $('[data-ok-text]', ok).textContent = kind === 'fail'
         ? 'We could not send your enquiry online just now. Please tap below to send it on WhatsApp — it only takes a second.'
-        : kind === 'whatsapp' ? 'Your enquiry is saved and WhatsApp has opened with your details. Our team will get back to you within 24 hours.'
+        : kind === 'whatsapp' ? (CAN_SAVE ? 'Your enquiry is saved and WhatsApp has opened with your details. Our team will get back to you within 24 hours.'
+                                          : 'WhatsApp has opened with your enquiry ready — just tap Send. Our team will get back to you within 24 hours.')
         : 'Your enquiry has been received. Our team will call you within 24 hours.';
       var wa = $('[data-ok-wa]', ok); wa.href = waUrl();
-      $('span', wa).textContent = kind === 'fail' ? 'Send on WhatsApp' : 'Chat on WhatsApp now';
-      wa.hidden = kind === 'whatsapp';
+      $('span', wa).textContent = kind === 'fail' ? 'Send on WhatsApp' : kind === 'whatsapp' ? 'WhatsApp didn\u2019t open? Tap here' : 'Chat on WhatsApp now';
+      wa.hidden = kind === 'whatsapp' && CAN_SAVE;
       form.classList.add('sent');
       ok.setAttribute('tabindex', '-1'); ok.focus({ preventScroll: true });
       form.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -342,6 +346,7 @@
       e.preventDefault();
       if (form.website && form.website.value) return;
       if (!check()) return;
+      if (!CAN_SAVE) { window.open(waUrl(), '_blank', 'noopener'); showResult('whatsapp'); return; }  // no database yet: WhatsApp directly
       submitBtn.disabled = true; var lbl = $('[data-label]', submitBtn), was = lbl.textContent; lbl.textContent = 'Sending…';
       save('form').then(function () { showResult('ok'); }, function () { showResult('fail'); })
         .then(function () { submitBtn.disabled = false; lbl.textContent = was; });
