@@ -66,7 +66,7 @@ Free Render servers go to sleep after 15 minutes without visitors, and take abou
 | `DATABASE_URL` | yes | PostgreSQL connection string (Neon, Supabase, Render Postgres…) |
 | `ADMIN_PASSWORD` | yes | Dashboard password |
 | `SESSION_SECRET` | recommended | Keeps logins secure (you stay logged in for 30 days) |
-| `ALLOWED_ORIGINS` | no | Websites allowed to send enquiries. Default `https://chefsfinefood.com,https://www.chefsfinefood.com` (add your `.onrender.com` site address while testing) |
+| `ALLOWED_ORIGINS` | no | Extra websites allowed to send enquiries (comma separated). chefsfinefood.com, www and `chefsfinefood….onrender.com` are always allowed. |
 
 ## Security built in
 - Password-protected dashboard (secure, HTTP-only login cookie; 10 tries per 15 minutes)
