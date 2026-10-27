@@ -5,9 +5,10 @@
   /* ===== SETTINGS — edit these ===== */
   var WHATSAPP = '919055135000';            // number with country code, no +
   var EMAIL = 'finefoodthechef@gmail.com';
-  // Enquiry backend (the Render web service in /server). Enquiries are saved here
-  // and appear in the dashboard at  ENQUIRY_API + '/admin/'.
-  var ENQUIRY_API = 'https://chefsfinefood-api.onrender.com';
+  // Enquiries are saved by the server on this same domain (chefsfinefood.com/api/enquiries)
+  // and appear in the dashboard at chefsfinefood.com/admin/. Leave empty for same domain.
+  var ENQUIRY_API = '';
+  var CAN_SAVE = /^https?:$/.test(location.protocol);
   /* ================================= */
 
   var $ = function (s, c) { return (c || document).querySelector(s); };
@@ -274,7 +275,7 @@
 
   // Enquiry form → saved to the backend; WhatsApp is optional (and the fallback)
   var forms = $$('form.enq-form');
-  if (forms.length && ENQUIRY_API) {
+  if (forms.length && CAN_SAVE) {
     // wake the server early (free hosting sleeps when idle) so submitting is quick
     try { fetch(ENQUIRY_API + '/api/health', { mode: 'no-cors', cache: 'no-store' }).catch(function () {}); } catch (e) {}
   }
@@ -313,7 +314,7 @@
     };
     var waUrl = function () { return 'https://wa.me/' + WHATSAPP + '?text=' + encodeURIComponent(waText()); };
     var save = function (channel) {
-      if (!ENQUIRY_API) return Promise.reject(new Error('no api'));
+      if (!CAN_SAVE) return Promise.reject(new Error('no api'));
       var ctrl = 'AbortController' in window ? new AbortController() : null;
       var timer = setTimeout(function () { if (ctrl) ctrl.abort(); }, 45000);
       return fetch(ENQUIRY_API + '/api/enquiries', {

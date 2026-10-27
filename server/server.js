@@ -291,10 +291,89 @@ function serveAdminFile(res, rel) {
   });
 }
 
+/* ---------------- Public website (the whole chefsfinefood.com site) ---------------- */
+const zlib = require('zlib');
+const SITE_DIR = path.resolve(__dirname, '..');
+const SITE_TYPES = Object.assign({}, TYPES, {
+  '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.ico': 'image/x-icon', '.xml': 'application/xml; charset=utf-8',
+  '.txt': 'text/plain; charset=utf-8', '.json': 'application/json; charset=utf-8', '.webmanifest': 'application/manifest+json',
+  '.mp4': 'video/mp4', '.webm': 'video/webm', '.woff2': 'font/woff2', '.gif': 'image/gif', '.pdf': 'application/pdf',
+});
+const COMPRESS = /\.(html|css|js|svg|xml|txt|json|webmanifest)$/;
+const gzCache = new Map();
+const BLOCKED = /^\/(server|node_modules)(\/|$)|\/\.|^\/(render\.yaml|README\.txt|package(-lock)?\.json)$/i;
+
+function siteHeaders(fp) {
+  const ext = path.extname(fp).toLowerCase();
+  return {
+    'Content-Type': SITE_TYPES[ext] || 'application/octet-stream',
+    'Cache-Control': ext === '.html' ? 'public, max-age=0, must-revalidate' : /\.(mp4|webm|jpg|jpeg|png|webp|ico|woff2|gif)$/.test(ext) ? 'public, max-age=2592000' : 'public, max-age=604800',
+    'X-Content-Type-Options': 'nosniff',
+    'Referrer-Policy': 'strict-origin-when-cross-origin',
+    'X-Frame-Options': 'SAMEORIGIN',
+  };
+}
+function sendFile(req, res, fp, status) {
+  fs.stat(fp, (err, st) => {
+    if (err || !st.isFile()) return notFound(req, res);
+    const h = siteHeaders(fp);
+    h['Last-Modified'] = st.mtime.toUTCString();
+    if (req.headers['if-modified-since'] && new Date(req.headers['if-modified-since']) >= new Date(st.mtime.toUTCString()) && !status) { res.writeHead(304, h); return res.end(); }
+    // video / large files: support byte ranges (needed for iPhone video playback)
+    const range = req.headers.range;
+    if (range && /^bytes=/.test(range)) {
+      const m = range.replace('bytes=', '').split('-');
+      let start = m[0] === '' ? st.size - Number(m[1]) : Number(m[0]);
+      let end = m[0] !== '' && m[1] ? Number(m[1]) : st.size - 1;
+      if (isNaN(start) || start < 0 || start >= st.size || end >= st.size || start > end) { res.writeHead(416, { 'Content-Range': `bytes */${st.size}` }); return res.end(); }
+      res.writeHead(206, Object.assign(h, { 'Content-Range': `bytes ${start}-${end}/${st.size}`, 'Accept-Ranges': 'bytes', 'Content-Length': end - start + 1 }));
+      if (req.method === 'HEAD') return res.end();
+      return fs.createReadStream(fp, { start, end }).pipe(res);
+    }
+    h['Accept-Ranges'] = 'bytes';
+    if (COMPRESS.test(fp) && /\bgzip\b/.test(req.headers['accept-encoding'] || '')) {
+      const key = fp + ':' + st.mtimeMs;
+      let gz = gzCache.get(key);
+      if (!gz) { gz = zlib.gzipSync(fs.readFileSync(fp)); gzCache.set(key, gz); }
+      res.writeHead(status || 200, Object.assign(h, { 'Content-Encoding': 'gzip', 'Content-Length': gz.length, Vary: 'Accept-Encoding' }));
+      return res.end(req.method === 'HEAD' ? undefined : gz);
+    }
+    res.writeHead(status || 200, Object.assign(h, { 'Content-Length': st.size }));
+    if (req.method === 'HEAD') return res.end();
+    fs.createReadStream(fp).pipe(res);
+  });
+}
+function notFound(req, res) {
+  const nf = path.join(SITE_DIR, '404.html');
+  if (fs.existsSync(nf)) return sendFile(req, res, nf, 404);
+  send(res, 404, 'Not found');
+}
+function serveSite(req, res, url) {
+  if (req.method !== 'GET' && req.method !== 'HEAD') return send(res, 405, 'Method not allowed');
+  let rel;
+  try { rel = decodeURIComponent(url.pathname); } catch (e) { return notFound(req, res); }
+  if (rel.includes('\0') || BLOCKED.test(rel)) return notFound(req, res);
+  const fp = path.resolve(SITE_DIR, '.' + rel);
+  if (fp !== SITE_DIR && !fp.startsWith(SITE_DIR + path.sep)) return notFound(req, res);
+  if (rel.endsWith('/')) return sendFile(req, res, path.join(fp, 'index.html'));
+  fs.stat(fp, (err, st) => {
+    if (!err && st.isDirectory()) { res.writeHead(301, { Location: rel + '/' + url.search }); return res.end(); }
+    if (!err && st.isFile()) {
+      if (path.basename(fp) === 'index.html') { res.writeHead(301, { Location: rel.replace(/index\.html$/, '') + url.search }); return res.end(); }
+      return sendFile(req, res, fp);
+    }
+    notFound(req, res);
+  });
+}
+
 /* ---------------- Router ---------------- */
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, 'http://x');
   const p = url.pathname.replace(/\/+$/, '') || '/';
+  // www.chefsfinefood.com → chefsfinefood.com, and http → https (Render terminates SSL)
+  const host = (req.headers.host || '').toLowerCase();
+  if (host.startsWith('www.')) { res.writeHead(301, { Location: 'https://' + host.slice(4) + req.url }); return res.end(); }
+  if (req.headers['x-forwarded-proto'] === 'http') { res.writeHead(301, { Location: 'https://' + host + req.url }); return res.end(); }
   try {
     // public
     if (p === '/api/health') {
@@ -306,11 +385,10 @@ const server = http.createServer(async (req, res) => {
       const allowed = cors(req, res);
       if (req.method === 'OPTIONS') return send(res, allowed ? 204 : 403, '');
       if (req.method !== 'POST') return send(res, 405, { ok: false });
-      if (req.headers.origin && !allowed) { console.warn('Blocked enquiry from origin', req.headers.origin, '— add it to ALLOWED_ORIGINS'); return send(res, 403, { ok: false, error: 'Origin not allowed' }); }
+      if (req.headers.origin && !allowed && !sameOrigin(req)) { console.warn('Blocked enquiry from origin', req.headers.origin, '— add it to ALLOWED_ORIGINS'); return send(res, 403, { ok: false, error: 'Origin not allowed' }); }
       if (!dbReady) return send(res, 503, { ok: false, error: 'Not ready' });
       return await createEnquiry(req, res);
     }
-    if (p === '/' ) { res.writeHead(302, { Location: '/admin/' }); return res.end(); }
     if (p === '/admin') { if (!req.url.endsWith('/')) { res.writeHead(301, { Location: '/admin/' }); return res.end(); } return serveAdminFile(res, 'index.html'); }
     if (p.startsWith('/admin/') && req.method === 'GET') return serveAdminFile(res, p.slice(7) || 'index.html');
 
@@ -337,14 +415,15 @@ const server = http.createServer(async (req, res) => {
       if (m && req.method === 'PATCH') return await updateEnquiry(req, res, Number(m[1]));
       if (m && req.method === 'DELETE') return await deleteEnquiry(req, res, Number(m[1]));
     }
-    send(res, 404, { ok: false, error: 'Not found' });
+    if (p.startsWith('/api/')) return send(res, 404, { ok: false, error: 'Not found' });
+    return serveSite(req, res, url);
   } catch (err) {
     console.error(req.method, req.url, err);
     if (!res.headersSent) send(res, 500, { ok: false, error: 'Server error' });
   }
 });
 
-server.listen(PORT, () => console.log(`Enquiry server running on port ${PORT} — dashboard at /admin/`));
+server.listen(PORT, () => console.log(`chefsfinefood.com running on port ${PORT} — website at /, dashboard at /admin/`));
 async function connectDb() {
   if (!pool) return;
   try { await migrate(); dbReady = true; dbError = ''; console.log('Database connected and ready.'); }

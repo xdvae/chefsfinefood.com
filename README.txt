@@ -41,7 +41,7 @@ Videos: see assets/video/PUT-VIDEOS-HERE.txt
 ENQUIRY FORM + DASHBOARD
 ------------------------
 Enquiries are saved to a database and shown in a dashboard:
-  https://chefsfinefood-api.onrender.com/admin/
+  https://chefsfinefood.com/admin/
 Setup steps (Neon database + Render web service): see server/README.md
 Until the backend is set up, the form asks visitors to send their enquiry on WhatsApp.
 

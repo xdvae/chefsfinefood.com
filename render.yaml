@@ -9,7 +9,7 @@ databases:
 
 services:
   - type: web
-    name: chefsfinefood-api
+    name: chefsfinefood
     runtime: node
     plan: free
     region: singapore

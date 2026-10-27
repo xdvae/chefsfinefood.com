@@ -1,8 +1,10 @@
-# Enquiry backend & dashboard
+# Website server, enquiries & dashboard
+
+This one Node server runs the whole site (chefsfinefood.com), saves form enquiries in PostgreSQL, and serves the dashboard at /admin/. Point the chefsfinefood.com custom domain at this web service.
 
 Every enquiry sent from the website is saved in a database. You see them in a simple dashboard at:
 
-**https://chefsfinefood-api.onrender.com/admin/**
+**https://chefsfinefood.com/admin/**
 
 From the dashboard you can call or WhatsApp a customer with one tap, mark each enquiry **New → Contacted → Booked → Closed**, keep notes, search, and download everything for Excel.
 
@@ -12,19 +14,19 @@ From the dashboard you can call or WhatsApp a customer with one tap, mark each e
 1. In Render click **New → Blueprint**.
 2. Pick the repo **xdvae/chefsfinefood.com** and click **Apply**.
 3. When it asks for `ADMIN_PASSWORD`, type your dashboard password.
-4. Render creates two things: the database **chefsfinefood-db** and the server **chefsfinefood-api**. Wait until both show **Live/Available**.
-5. Open **https://chefsfinefood-api.onrender.com/admin/** and log in.
+4. Render creates two things: the database **chefsfinefood-db** and the server **chefsfinefood**. Wait until both show **Live/Available**.
+5. Open **https://chefsfinefood.com/admin/** and log in.
 
 That's it. The database tables are created automatically.
 
 > **Important — free database lasts 30 days.** Render deletes free databases 30 days after creation (it emails you first).
 > Before then, either open **chefsfinefood-db → Upgrade** in Render (≈ $6–7/month, keeps everything), or create a free
-> database at neon.tech and replace `DATABASE_URL` on chefsfinefood-api with the Neon connection string.
+> database at neon.tech and replace `DATABASE_URL` on chefsfinefood with the Neon connection string.
 > Download your enquiries first with the **Excel** button in the dashboard.
 
 ### Keep it awake (optional)
 Free servers sleep after 15 minutes. Make a free job at **cron-job.org** that opens
-**https://chefsfinefood-api.onrender.com/api/health** every 10 minutes.
+**https://chefsfinefood.com/api/health** every 10 minutes.
 
 ---
 
@@ -51,11 +53,11 @@ Free servers sleep after 15 minutes. Make a free job at **cron-job.org** that op
 ---
 
 ## Troubleshooting
-Open **https://chefsfinefood-api.onrender.com/api/health**. It tells you what is wrong:
+Open **https://chefsfinefood.com/api/health**. It tells you what is wrong:
 
 | You see | Fix |
 |---|---|
-| Render "Not Found" page | The web service doesn't exist under that name. Create it (step 2). If Render gave it a different address (e.g. `chefsfinefood-api-ab12.onrender.com`), send that address so the website can be pointed to it. |
+| Render "Not Found" page | The web service doesn't exist under that name. Create it (step 2). If Render gave it a different address (e.g. `chefsfinefood-ab12.onrender.com`), send that address so the website can be pointed to it. |
 | `"database": "DATABASE_URL is not set…"` | The server was created by hand instead of by the Blueprint. Delete it and use **New → Blueprint**, or add `DATABASE_URL` under **Environment**. |
 | `"database": "Database error: …"` | The database isn't ready yet or has expired. Check **chefsfinefood-db** in Render is *Available*. If you use Neon, copy its connection string again. |
 | `"adminPassword": "NOT SET"` | Add `ADMIN_PASSWORD` in Render → **Environment**. |
