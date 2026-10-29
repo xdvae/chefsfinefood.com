@@ -362,6 +362,34 @@
     if (again) again.addEventListener('click', function () { form.reset(); form.classList.remove('sent'); });
   });
 
+  // Full menu: veg / non-veg filter + search
+  $$('[data-menu]').forEach(function (box) {
+    var diet = 'all', q = '';
+    var items = $$('.mlist li', box), count = $('.mcount', box), none = $('.mnone', box), input = $('.msearch', box);
+    var norm = function (t) { return t.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, ''); };
+    items.forEach(function (li) { li._t = norm(li.textContent); });
+    var apply = function () {
+      var shown = 0;
+      items.forEach(function (li) {
+        var k = li.getAttribute('data-k');
+        var ok = (diet === 'all' || k === diet || k === 'both') && (!q || li._t.indexOf(q) > -1);
+        li.classList.toggle('hide', !ok); if (ok) shown++;
+      });
+      $$('.msec', box).forEach(function (s) { s.classList.toggle('hide', !$('li:not(.hide)', s)); });
+      $$('.mgroup', box).forEach(function (g) { g.classList.toggle('hide', !$('.msec:not(.hide)', g)); });
+      none.hidden = shown > 0;
+      count.textContent = (diet === 'all' && !q) ? '' : shown + ' dish' + (shown === 1 ? '' : 'es') + ' shown';
+    };
+    $$('[data-diet]', box).forEach(function (b) {
+      b.addEventListener('click', function () {
+        diet = b.getAttribute('data-diet');
+        $$('[data-diet]', box).forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); });
+        apply();
+      });
+    });
+    var t; input.addEventListener('input', function () { clearTimeout(t); t = setTimeout(function () { q = norm(input.value.trim()); apply(); }, 120); });
+  });
+
   // Footer year
   $$('[data-year]').forEach(function (el) { el.textContent = new Date().getFullYear(); });
 })();
