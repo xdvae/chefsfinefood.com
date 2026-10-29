@@ -872,3 +872,25 @@ body.viewer-open .wa-float,body.viewer-open .to-top{opacity:0;visibility:hidden}
   .msearch{padding:8px 0;font-size:.9rem}
   .mgroup{scroll-margin-top:190px}
 }
+
+/* ---------- Download menu ---------- */
+.dl-card{display:flex;align-items:center;gap:18px;margin-top:30px;padding:18px 22px;border:1px solid var(--gold);background:#fff;color:var(--ink);transition:background .3s,box-shadow .3s;max-width:460px;position:relative}
+.dl-card::after{content:"";position:absolute;inset:5px;border:1px solid rgba(184,149,79,.25);pointer-events:none}
+.dl-card:hover{background:#fbf6ec;box-shadow:0 20px 40px -28px rgba(0,0,0,.35)}
+.dl-ic{width:48px;height:48px;border-radius:50%;background:var(--gold);color:#1a1712;display:grid;place-items:center;flex:none}
+.dl-ic svg{width:22px;height:22px}
+.dl-txt{flex:1;min-width:0}
+.dl-txt b{display:block;font-family:var(--serif);font-size:1.5rem;font-weight:500;line-height:1.1}
+.dl-txt small{display:block;font-size:.78rem;color:var(--muted);margin-top:4px}
+.dl-go{font-size:.68rem;letter-spacing:.24em;text-transform:uppercase;color:var(--gold-dark);border-bottom:1px solid var(--gold);padding-bottom:4px;white-space:nowrap}
+.dl-end{display:flex;justify-content:center;padding:40px 0 0}
+.dl-end .dl-card{margin-top:0}
+.mdl{display:inline-flex;align-items:center;gap:8px;font-size:.72rem;letter-spacing:.18em;text-transform:uppercase;color:#1a1712;background:var(--gold);padding:10px 16px;white-space:nowrap;transition:background .3s}
+.mdl:hover{background:var(--gold-2)}
+.mdl svg{width:16px;height:16px}
+@media (max-width:640px){
+  .menu-toolbar .mdl{display:inline-flex!important;padding:8px 12px;font-size:.64rem;margin-left:auto}
+  .dl-card{gap:14px;padding:16px}
+  .dl-go{display:none}
+  .dl-txt b{font-size:1.3rem}
+}

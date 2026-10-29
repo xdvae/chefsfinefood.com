@@ -97,38 +97,52 @@
     w.appendChild(dt); w.appendChild(dd); dl.appendChild(w);
   }
 
+  function svgUse(id) { var ns = 'http://www.w3.org/2000/svg', sv = document.createElementNS(ns, 'svg'), u = document.createElementNS(ns, 'use'); u.setAttribute('href', '#' + id); sv.appendChild(u); return sv; }
+  function fact(ul, icon, text, cls) {
+    if (!text) return;
+    var li = document.createElement('li'); if (cls) li.className = cls;
+    var b = document.createElement('b'); b.textContent = text;
+    li.appendChild(svgUse(icon)); li.appendChild(b); ul.appendChild(li);
+  }
+  function paintStatus(n, s) {
+    ['new', 'contacted', 'booked', 'closed'].forEach(function (x) { n.classList.toggle('st-' + x, x === s); });
+    $('.c-state .dot', n).className = 'dot ' + s;
+    $('.c-state em', n).textContent = STATUS_LABEL[s];
+    $$('.c-status button', n).forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.s === s)); });
+  }
+
   function card(e) {
     var n = $('#cardTpl').content.firstElementChild.cloneNode(true);
     n.dataset.id = e.id;
-    n.classList.add('st-' + e.status);
+    $('.avatar', n).textContent = (e.name || '?').trim().charAt(0).toUpperCase();
     var nm = $('.c-name', n); nm.textContent = e.name;
-    if (e.brand === 'Shree Shyam') { var tg = document.createElement('span'); tg.className = 'tag'; tg.textContent = 'Shree Shyam · Pure Veg'; nm.appendChild(tg); }
-    $('.c-when', n).textContent = fmtWhen(e.created_at) + (e.channel === 'whatsapp' ? ' · also sent on WhatsApp' : '');
-    $('.c-flag', n).hidden = e.status !== 'new';
+    if (e.brand === 'Shree Shyam') { var tg = document.createElement('span'); tg.className = 'tag'; tg.textContent = 'Pure Veg'; nm.appendChild(tg); }
+    $('.c-when', n).textContent = fmtWhen(e.created_at).replace('Received ', '') + (e.channel === 'whatsapp' ? ' · via WhatsApp' : '');
+    paintStatus(n, e.status);
+
+    var ul = $('.c-facts', n), ed = fmtEventDate(e.event_date);
+    fact(ul, 'i-star', e.event_type);
+    if (ed) fact(ul, 'i-cal', ed.label.replace(/^\w+, /, '') + ' · ' + ed.rel, /^(today|tomorrow|in [1-9] days|in 1[0-4] days)$/.test(ed.rel) ? 'soon' : '');
+    fact(ul, 'i-users', e.guests ? e.guests + ' guests' : '');
+    fact(ul, 'i-pin', e.venue);
 
     var tel = String(e.phone).replace(/[^\d+]/g, '');
     $('.call', n).href = 'tel:' + tel;
-    $('.call', n).lastChild.textContent = window.innerWidth < 760 ? 'Call' : 'Call ' + e.phone;
+    $('.call span', n).textContent = (window.innerWidth < 760 || e.email) ? 'Call' : 'Call ' + e.phone;
     var first = e.name.split(' ')[0];
     var msg = 'Namaste ' + first + ', thank you for your enquiry with ' + (e.brand === 'Shree Shyam' ? 'Shree Shyam Caterers' : "The Chef's Fine Food Caterers") +
       (e.event_type ? ' for your ' + e.event_type.toLowerCase() : '') + '. ';
     $('.wa', n).href = 'https://wa.me/' + digits(e.phone) + '?text=' + encodeURIComponent(msg);
     if (e.email) { var m = $('.mail', n); m.hidden = false; m.href = 'mailto:' + e.email + '?subject=' + encodeURIComponent('Your event enquiry'); }
 
-    var dl = $('.c-details', n), ed = fmtEventDate(e.event_date);
-    detail(dl, 'Event', e.event_type);
-    detail(dl, 'Event date', ed && ed.label, ed && ed.rel);
-    detail(dl, 'Guests', e.guests);
-    detail(dl, 'Venue / area', e.venue);
+    var dl = $('.c-details', n);
     detail(dl, 'Phone', e.phone);
     detail(dl, 'Email', e.email);
     detail(dl, 'Services wanted', e.services, null, true);
     detail(dl, 'Message', e.message, null, true);
+    var last = dl.lastElementChild; if (last && e.message) last.classList.add('msg');
 
-    $$('.c-status button', n).forEach(function (b) {
-      b.setAttribute('aria-pressed', String(b.dataset.s === e.status));
-      b.addEventListener('click', function () { setStatus(e, b.dataset.s, n); });
-    });
+    $$('.c-status button', n).forEach(function (b) { b.addEventListener('click', function () { setStatus(e, b.dataset.s, n); }); });
 
     var ta = $('textarea', n), saved = $('.saved', n), t;
     ta.value = e.notes || '';
@@ -142,7 +156,7 @@
 
     var PAGES = { '/': 'Home page', '/contact/': 'Contact page', '/shree-shyam-caterers/': 'Shree Shyam page', '/catering-menu/': 'Menu page', '/weddings-events/': 'Weddings page', '/about/': 'About page', '/gallery/': 'Gallery' };
     var src = e.source_page ? (PAGES[e.source_page] || e.source_page.replace(/^\/|\/$/g, '').replace(/[-/]/g, ' ')) : '';
-    $('.c-src', n).textContent = 'Enquiry #' + e.id + (src ? ' · from ' + src : '');
+    $('.c-src', n).textContent = '#' + e.id + (src ? ' · from ' + src : '');
     $('.del', n).addEventListener('click', function () {
       if (!confirm('Delete the enquiry from ' + e.name + '? This cannot be undone.')) return;
       api('/api/admin/enquiries/' + e.id, { method: 'DELETE' }).then(function (j) {
@@ -154,13 +168,9 @@
 
   function setStatus(e, s, n) {
     if (e.status === s) return;
-    var prev = e.status;
     api('/api/admin/enquiries/' + e.id, { method: 'PATCH', body: JSON.stringify({ status: s }) }).then(function (j) {
       if (!j.ok) return toast('Could not update');
-      e.status = s;
-      n.classList.remove('st-' + prev); n.classList.add('st-' + s);
-      $$('.c-status button', n).forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.s === s)); });
-      $('.c-flag', n).hidden = s !== 'new';
+      e.status = s; paintStatus(n, s);
       toast(e.name + ' → ' + STATUS_LABEL[s]);
       load(true);
     });
@@ -168,7 +178,9 @@
 
   function render() {
     var list = $('#list'); list.textContent = '';
-    state.rows.forEach(function (e) { list.appendChild(card(e)); });
+    var brand = $('#brandSel').value;
+    var rows = state.rows.filter(function (e) { return !brand || e.brand === brand; });
+    rows.forEach(function (e) { list.appendChild(card(e)); });
     var st = state.stats || {};
     $('#stNew').textContent = st.new || 0; $('#stToday').textContent = st.today || 0;
     $('#stWeek').textContent = st.week || 0; $('#stUpcoming').textContent = st.upcoming || 0;
@@ -176,15 +188,16 @@
     $('#cBooked').textContent = st.booked || 0; $('#cClosed').textContent = st.closed || 0;
     document.title = (st.new ? '(' + st.new + ' new) ' : '') + "Enquiries · The Chef's";
     var empty = $('#empty');
-    if (state.rows.length) { empty.hidden = true; }
+    if (rows.length) { empty.hidden = true; }
     else {
       empty.hidden = false; empty.textContent = '';
       var b = document.createElement('b');
-      b.textContent = state.q ? 'No matches' : (state.status ? 'Nothing here yet' : 'No enquiries yet');
+      b.textContent = state.q ? 'No matches' : (state.status || brand ? 'Nothing here yet' : 'No enquiries yet');
       empty.appendChild(b);
       empty.appendChild(document.createTextNode(state.q ? 'Try a different name or number.' : 'New enquiries from the website will appear here automatically.'));
     }
   }
+  $('#brandSel').addEventListener('change', render);
 
   var loading = false;
   function load(quiet) {
