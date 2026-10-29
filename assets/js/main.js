@@ -275,6 +275,38 @@
     }
   }
 
+
+  // Quick quote pop-up: any [data-quote] link opens it (falls back to the contact form without JS)
+  var qm = $('#quote');
+  if (qm) {
+    var qf = $('form', qm), lastFocus = null;
+    var pageEvent = (function (p) {
+      return /birthday/.test(p) ? 'Birthday' : /corporate/.test(p) ? 'Corporate Event' : /jagran/.test(p) ? 'Religious Function / Jagran' : '';
+    })(location.pathname);
+    var openQ = function (trigger) {
+      lastFocus = trigger || document.activeElement;
+      if (!qf.classList.contains('sent')) {
+        qf.message.value = (trigger && trigger.getAttribute('data-msg')) || '';
+        if (pageEvent && qf.event) qf.event.value = pageEvent;
+      }
+      if (typeof setMenu === 'function') setMenu(false);
+      qm.hidden = false; document.body.classList.add('quote-open');
+      requestAnimationFrame(function () { qm.classList.add('open'); });
+      setTimeout(function () { var n = $('input[name="name"]', qf); if (n && !qf.classList.contains('sent')) n.focus(); }, 60);
+    };
+    var closeQ = function () {
+      qm.classList.remove('open'); document.body.classList.remove('quote-open');
+      setTimeout(function () { qm.hidden = true; }, 250);
+      if (lastFocus && lastFocus.focus) lastFocus.focus({ preventScroll: true });
+    };
+    document.addEventListener('click', function (e) {
+      var t = e.target.closest('[data-quote]');
+      if (t) { e.preventDefault(); openQ(t); return; }
+      if (e.target.closest('[data-qclose]')) closeQ();
+    });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !qm.hidden) closeQ(); });
+  }
+
   // Enquiry form → saved to the backend; WhatsApp is optional (and the fallback)
   var forms = $$('form.enq-form');
   if (forms.length && CAN_SAVE) {
