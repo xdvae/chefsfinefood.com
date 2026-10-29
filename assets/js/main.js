@@ -7,8 +7,8 @@
   var EMAIL = 'finefoodthechef@gmail.com';
   // Enquiries are saved in the Supabase database and shown at chefsfinefood.com/admin/
   // (public anon key — safe to publish; the database only allows the locked submit function)
-  var SUPABASE_URL = '__SUPABASE_URL__';
-  var SUPABASE_KEY = '__SUPABASE_ANON_KEY__';
+  var SUPABASE_URL = 'https://dqtkbmnhrowyblzvuqmd.supabase.co';
+  var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRxdGtibW5ocm93eWJsenZ1cW1kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMyOTEyODgsImV4cCI6MjEwODg2NzI4OH0.HcwmWP6t3EDXelBBJTXMQIaEUQo7guH7Zsf7N1C3nKw';
   var CAN_SAVE = SUPABASE_URL.indexOf('__') !== 0;
   var sbHeaders = { 'Content-Type': 'application/json', apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY };
   /* ================================= */
@@ -319,7 +319,7 @@
     var save = function (channel) {
       if (!CAN_SAVE) return Promise.reject(new Error('no api'));
       var ctrl = 'AbortController' in window ? new AbortController() : null;
-      var timer = setTimeout(function () { if (ctrl) ctrl.abort(); }, 45000);
+      var timer = setTimeout(function () { if (ctrl) ctrl.abort(); }, 15000);
       return fetch(SUPABASE_URL + '/rest/v1/rpc/submit_enquiry', {
         method: 'POST', headers: sbHeaders, body: JSON.stringify({ p: payload(channel) }),
         keepalive: channel === 'whatsapp', signal: ctrl ? ctrl.signal : undefined

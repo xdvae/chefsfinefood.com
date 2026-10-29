@@ -2,5 +2,6 @@ User-agent: *
 Allow: /
 Disallow: /404.html
 Disallow: /server/
+Disallow: /admin/
 
 Sitemap: https://chefsfinefood.com/sitemap.xml

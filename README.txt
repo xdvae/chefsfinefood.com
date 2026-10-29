@@ -38,10 +38,12 @@ To use your own: put photos in assets/images/ and change the img src in the HTML
 e.g. alt="Floral mandap décor at a wedding in Jammu" - this helps Google Images.
 Videos: see assets/video/PUT-VIDEOS-HERE.txt
 
-ENQUIRY FORM
-------------
-Forms open WhatsApp (90551 35000) with the customer's enquiry filled in - no backend needed.
-A database + dashboard version is parked in /server for later (not active).
+ENQUIRIES + DASHBOARD
+---------------------
+Every form enquiry is saved in a free Supabase database (project "chefsfinefood", Mumbai region).
+Dashboard: https://chefsfinefood.com/admin/  (password set by Claude - change it any time on request)
+"Send on WhatsApp" also opens WhatsApp. If the database can't be reached, visitors are sent to WhatsApp.
+Free Supabase projects pause after 7 days with no activity; every visit to a page with a form keeps it awake.
 
 WHAT'S INCLUDED FOR SEO
 -----------------------
