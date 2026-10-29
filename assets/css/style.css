@@ -941,3 +941,4 @@ body.quote-open .wa-float,body.quote-open .to-top{opacity:0;visibility:hidden}
   .q-box .fields>h2{font-size:1.7rem;padding-right:40px}
 }
 @media (max-width:360px){.actbar a{letter-spacing:.1em;gap:6px;font-size:.62rem}}
+.why-faq .btns{justify-content:center;align-items:center}
