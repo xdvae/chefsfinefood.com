@@ -51,6 +51,12 @@
     var tt = $('.to-top'); if (tt) tt.classList.toggle('show', window.scrollY > 700);
   };
   onScroll(); window.addEventListener('scroll', onScroll, { passive: true });
+  // keep sticky bars (menu toolbar) exactly below the header, whatever its height
+  if (hdr) {
+    var setH = function () { document.documentElement.style.setProperty('--hdr', Math.round(hdr.getBoundingClientRect().height) + 'px'); };
+    setH(); window.addEventListener('resize', setH);
+    if ('ResizeObserver' in window) new ResizeObserver(setH).observe(hdr); else hdr.addEventListener('transitionend', setH);
+  }
 
   // Mobile menu
   var burger = $('.burger'), menu = $('#menu');

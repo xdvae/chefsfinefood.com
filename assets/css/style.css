@@ -63,7 +63,7 @@ section{padding:110px 0}
 
 /* ---------- Header ---------- */
 .site-header{position:fixed;top:0;left:0;right:0;z-index:50;transition:background .4s,border-color .4s;border-bottom:1px solid rgba(212,180,122,.12)}
-.site-header.solid,.site-header.open{background:rgba(24,24,20,.98);border-color:rgba(212,180,122,.22)}
+.site-header.solid,.site-header.open{background:#181814;border-color:rgba(212,180,122,.22)}
 .nav{display:flex;align-items:center;justify-content:space-between;gap:20px;height:92px;transition:height .4s}
 .solid .nav{height:76px}
 .logo{display:flex;align-items:center;gap:14px;color:#fff;flex:none}
@@ -828,7 +828,7 @@ body.viewer-open .wa-float,body.viewer-open .to-top{opacity:0;visibility:hidden}
 .menu-stats{display:flex;gap:40px;margin-top:30px;flex-wrap:wrap}
 .menu-stats b{display:block;font-family:var(--serif);font-size:2.6rem;font-weight:400;line-height:1}
 .menu-stats span{font-size:.8rem;color:var(--muted);display:inline-flex;align-items:center}
-.menu-toolbar{position:sticky;top:76px;z-index:20;display:flex;gap:18px 30px;align-items:center;flex-wrap:wrap;background:rgba(243,239,231,.97);padding:16px 0;border-bottom:1px solid var(--line);margin-bottom:8px}
+.menu-toolbar{position:sticky;top:var(--hdr,76px);z-index:20;display:flex;gap:18px 30px;align-items:center;flex-wrap:wrap;background:rgba(243,239,231,.97);padding:16px 0;border-bottom:1px solid var(--line);margin-bottom:8px}
 .diet{display:flex;gap:22px}
 .diet button{background:none;border:0;padding:8px 0;font-size:.74rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);cursor:pointer;position:relative;display:inline-flex;align-items:center}
 .diet button::after{content:"";position:absolute;left:0;right:100%;bottom:0;height:1px;background:var(--gold);transition:right .35s}
@@ -855,7 +855,7 @@ body.viewer-open .wa-float,body.viewer-open .to-top{opacity:0;visibility:hidden}
 .malso p{color:var(--muted);margin-bottom:18px}
 .mnote{color:var(--muted);font-size:.92rem;margin-top:30px}
 @media (max-width:640px){
-  .menu-toolbar{top:76px;gap:10px 18px;padding:12px 0}
+  .menu-toolbar{top:var(--hdr,76px);gap:10px 18px;padding:12px 0}
   .msearch{order:3;flex-basis:100%}
   .mdl{margin-left:auto}
   .mlist{columns:2 140px;column-gap:18px}
